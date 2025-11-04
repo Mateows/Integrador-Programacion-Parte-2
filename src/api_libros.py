@@ -1,104 +1,84 @@
 import requests
-from almacenamiento import guardar_libro
+import json
+from typing import Dict, Any, Optional
+from almacenamiento import guardar_libro, validar_entrada_libro
 
-def buscar_libro_api(base_path):
-    print("\n📚 BUSCAR LIBRO EN GOOGLE BOOKS\n")
+# URL base para la API de Google Books
+GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes"
 
-    consulta = input("🔍 Ingresá el título o autor: ").strip()
-    if not consulta:
-        print("⚠️ Debes ingresar un texto para buscar.")
-        return
-
-    # Llamada a la API de Google Books
-    url = f"https://www.googleapis.com/books/v1/volumes?q={consulta}"
-    print(f"🌐 URL generada: {url}")
-
+def obtener_datos_libro(query: str) -> Optional[Dict[str, Any]]:
+    """Busca un libro por título o autor en la Google Books API."""
     try:
-        response = requests.get(url)
-        print(f"🔢 Código de respuesta: {response.status_code}")
+        params = {"q": query, "maxResults": 1} # Traemos solo el primer resultado
+        response = requests.get(GOOGLE_BOOKS_API_URL, params=params, timeout=5)
+        response.raise_for_status() 
+
+        datos = response.json()
+        
+        if "items" not in datos or not datos["items"]:
+            return None
+
+        info = datos["items"][0]["volumeInfo"]
+        
+        # Mapeamos los datos de la API a nuestro patrón de diccionario
+        libro_data = {
+            # NIVELES DE JERARQUÍA (Asumidos/Derivados)
+            'genero': info.get('categories', ['Desconocido'])[0],
+            'autor': info.get('authors', ['Desconocido'])[0],
+            'anio': info.get('publishedDate', '0000').split('-')[0], # Tomamos solo el año
+            # ATRIBUTOS DEL ÍTEM
+            'titulo': info.get('title', 'Título Desconocido'),
+            'paginas': str(info.get('pageCount', 0)), # La validación lo convertirá
+        }
+        return libro_data
+
+    except requests.exceptions.RequestException as e:
+        print(f"\n❌ Error de conexión a la API: {e}")
+        return None
     except Exception as e:
-        print(f"❌ Error al conectar con la API: {e}")
+        print(f"\n❌ Error al procesar datos del libro: {e}")
+        return None
+
+
+def mostrar_libros_api():
+    """Permite al usuario buscar un libro y mostrarlo sin guardar."""
+    
+    query = input("\nIngresa el título o autor del libro a buscar en la API: ")
+    if not query.strip():
+        print("Búsqueda cancelada.")
         return
 
-    if response.status_code != 200:
-        print("❌ Error al conectar con la API. Verificá tu conexión a internet.")
-        return
+    datos = obtener_datos_libro(query)
+    
+    if datos:
+        print("\n--- 📚 LIBRO ENCONTRADO (API) 📚 ---")
+        print(f"Título: {datos['titulo']}")
+        print(f"Autor: {datos['autor']}")
+        print(f"Género: {datos['genero']}")
+        print(f"Año: {datos['anio']} | Páginas: {datos['paginas']}")
+        print("---------------------------------------")
+    else:
+        print("No se encontró el libro.")
 
-    data = response.json()
-    items = data.get("items", [])
-    print(f"📦 Cantidad de resultados encontrados: {len(items)}")
 
-    if not items:
-        print("⚠️ No se encontraron resultados.")
-        return
-
-    # Mostrar los primeros 5 resultados
-    print("\n=== Resultados encontrados ===")
-    for i, item in enumerate(items[:5], start=1):
-        info = item["volumeInfo"]
-        titulo = info.get("title", "Sin título")
-        autores = ", ".join(info.get("authors", ["Desconocido"]))
-        anio = info.get("publishedDate", "Desconocido")[:4]
-        print(f"{i}. {titulo} — {autores} ({anio})")
-
-    # Elegir un libro
-    try:
-        eleccion = int(input("\nElegí un número para guardar (0 para cancelar): "))
-    except ValueError:
-        print("❌ Opción inválida.")
-        return
-
-    if eleccion == 0:
+def buscar_y_guardar_libro(base_path: str):
+    """Busca un libro en la API y lo guarda en el sistema de archivos local."""
+    
+    query = input("\nIngresa el libro de la API que quieres guardar: ")
+    if not query.strip():
         print("Operación cancelada.")
         return
-    if eleccion < 1 or eleccion > len(items[:5]):
-        print("❌ Número fuera de rango.")
-        return
 
-    # Guardar el libro elegido
-    elegido = items[eleccion - 1]["volumeInfo"]
-    titulo = elegido.get("title", "Sin título")
-    autores = ", ".join(elegido.get("authors", ["Desconocido"]))
-    anio = elegido.get("publishedDate", "Desconocido")[:4]
-    paginas = elegido.get("pageCount", "0")
-    genero = elegido.get("categories", ["General"])[0]
-
-    print(f"\n✅ Guardando '{titulo}' en el sistema local...")
-
-    guardar_libro(base_path, genero, autores, anio, titulo, paginas)
-    print("💾 Libro guardado correctamente.")
-
-
-
-# Muestra depende el genero o tema libros ya que la api tiene millones y no permite mostrar todos
-def mostrar_libros_api():
-    print("\n LISTADO DE LIBROS DESDE GOOGLE BOOKS\n")
-
-    # usamos una consulta genérica si el usuario no ingresa nada
-    consulta = input("🔍 Ingresá un tema o presioná ENTER para mostrar libros populares: ").strip()
-    if not consulta:
-        consulta = "books"  # palabra genérica para traer resultados variados
-
-    # pedimos los primeros 10 resultados
-    url = f"https://www.googleapis.com/books/v1/volumes?q={consulta}&maxResults=10"
-    response = requests.get(url)
-
-    if response.status_code != 200:
-        print("❌ Error al conectar con la API.")
-        return
-
-    data = response.json()
-    items = data.get("items", [])
-
-    if not items:
-        print("No se encontraron libros disponibles.")
-        return
-
-    print(f"Mostrando {len(items)} resultados:\n")
-    for i, item in enumerate(items, start=1):
-        info = item.get("volumeInfo", {})
-        titulo = info.get("title", "Sin título")
-        autores = ", ".join(info.get("authors", ["Autor desconocido"]))
-        anio = info.get("publishedDate", "Sin año")
-        paginas = info.get("pageCount", "Desconocidas")
-        print(f"{i}. {titulo}\n   Autor(es): {autores}\n   Año: {anio}\n   Páginas: {paginas}\n")
+    libro_api_data = obtener_datos_libro(query)
+    
+    if libro_api_data:
+        # Usamos la misma función de validación de almacenamiento
+        es_valido, resultado = validar_entrada_libro(libro_api_data)
+        
+        if es_valido:
+            # Llama a la función de persistencia jerárquica
+            guardar_libro(base_path, libro_api_data)
+        else:
+            print(f"❌ Error al validar datos de la API (ej: faltan páginas o año): {resultado}")
+    else:
+        print("No se pudo guardar. El libro no fue encontrado o hubo un error en la API.")
