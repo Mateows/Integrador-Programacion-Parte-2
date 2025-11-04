@@ -1,105 +1,87 @@
 import os
-# Importamos las funciones de almacenamiento
-from almacenamiento import (
-    guardar_libro, 
-    mostrar_libros, 
-    modificar_libro, 
-    eliminar_libro, 
-    estadisticas,
-    ordenar_libros
-)
-# Importamos las funciones de la API
+from fsc_estadisticas import estadisticas
+from fsc_mostrar import mostrar_libros
+from fsc_guardado import guardar_libro
+from fsc_modificar import modificar_libro, eliminar_libro
 from api_libros import buscar_y_guardar_libro, mostrar_libros_api
 
-# Ruta base donde se guardarán los datos (asumiendo que main.py está en 'src' o 'fuente')
+# Ruta base donde se guardarán los datos
 BASE_PATH = os.path.join(os.path.dirname(__file__), "..", "data")
 BASE_PATH = os.path.abspath(BASE_PATH)
 os.makedirs(BASE_PATH, exist_ok=True)
-print("Guardando datos de la Biblioteca en:", BASE_PATH)
 
 
 def mostrar_menu(modo_api=False):
-    print("\n=== MENÚ PRINCIPAL - GESTIÓN DE BIBLIOTECA ===")
-
+    """Muestra el menú según el modo actual."""
     if modo_api:
-        print("1. 🌎 Buscar y guardar libro (API Google Books)")
-        print("8. 📋 Mostrar libros desde API (sin guardar)")
+        print("\n=== MENÚ PRINCIPAL (Modo API) ===")
+        print("1. Buscar y guardar libro (API)")
+        print("2. Mostrar libro desde la API")
+        print("3. Cambiar a modo local")
+        print("4. Salir")
     else:
-        print("1. ✍️ Agregar nuevo libro (Manual/Local)")
-    
-    print("2. 🔍 Mostrar y Filtrar Libros")
-    print("3. ✏️ Modificar Libro")
-    print("4. 🗑️ Eliminar Libro")
-    print("5. 📊 Estadísticas Globales")
-    print("6. ⬆️ Ordenar Lista Global")
-    print("7. 🚪 Salir")
-    print("-------------------------")
+        print("\n=== MENÚ PRINCIPAL (Modo Local) ===")
+        print("1. Agregar nuevo libro")
+        print("2. Mostrar libros locales")
+        print("3. Modificar libro")
+        print("4. Eliminar libro")
+        print("5. Estadísticas")
+        print("6. Cambiar a modo API")
+        print("7. Salir")
 
 
 def main():
-    print("SISTEMA DE GESTIÓN DE BIBLIOTECA (Jerarquía y Recursividad)\n")
+    print("📚 SISTEMA DE GESTIÓN DE LIBROS\n")
 
-    while True:
-        print("Seleccioná modo de trabajo:")
-        print("1. Local (usar datos guardados en CSV)")
-        print("2. API (consultar Google Books)")
-        modo = input("Elegí una opción (1 o 2): ")
-
-        if modo == "1":
-            modo_api = False
-            print("\nModo seleccionado: LOCAL (CSV manual)")
-            break
-        elif modo == "2":
-            modo_api = True
-            print("\nModo seleccionado: API de Google Books")
-            break
-        else:
-            print("Opción inválida. Intentá de nuevo.\n")
+    modo_api = False  # Por defecto inicia en modo local
 
     while True:
         mostrar_menu(modo_api)
         opcion = input("Elegí una opción: ")
-        
-        libro_data_input = {}
-        
-        match opcion:
-            case "1":
-                if modo_api:
+
+        # ----- MODO API -----
+        if modo_api:
+            match opcion:
+                case "1":
                     buscar_y_guardar_libro(BASE_PATH)
-                else:
-                    print("\n--- INGRESO DE NUEVO LIBRO ---")
-                    # 3 Niveles de Jerarquía
-                    libro_data_input['genero'] = input("Nivel 1 (Género, ej: Ciencia Ficcion): ")
-                    libro_data_input['autor'] = input("Nivel 2 (Autor, ej: Isaac Asimov): ")
-                    libro_data_input['anio'] = input("Nivel 3 (Año de publicación, ej: 1951): ")
-                    
-                    # Atributos del Ítem
-                    libro_data_input['titulo'] = input("Título del libro: ")
-                    libro_data_input['paginas'] = input("Cantidad de páginas (Numérico): ")
-                    
-                    guardar_libro(BASE_PATH, libro_data_input)
-
-            case "2":
-                mostrar_libros(BASE_PATH)
-            case "3":
-                modificar_libro(BASE_PATH)
-            case "4":
-                 eliminar_libro(BASE_PATH)
-            case "5":
-                 estadisticas(BASE_PATH)
-            case "6":
-                 ordenar_libros(BASE_PATH)
-            case "7":
-                print("¡Hasta luego!")
-                break
-            case "8":
-                if modo_api:
+                case "2":
                     mostrar_libros_api()
-                else:
-                    print("Esta opción solo está disponible en modo API.")
+                case "3":
+                    modo_api = False
+                    print("\n🔄 Cambiado a modo LOCAL.")
+                case "4":
+                    print("¡Hasta luego!")
+                    break
+                case _:
+                    print("Opción inválida.")
 
-            case _:
-                print("Opción no válida. Probá de nuevo.")
+        # ----- MODO LOCAL -----
+        else:
+            match opcion:
+                case "1":
+                    genero = input("Género del libro: ")
+                    autor = input("Autor: ")
+                    anio = input("Año de publicación: ")
+                    titulo = input("Título del libro: ")
+                    paginas = input("Cantidad de páginas: ")
+                    guardar_libro(BASE_PATH, genero, autor, anio, titulo, paginas)
+                case "2":
+                    mostrar_libros(BASE_PATH)
+                case "3":
+                    modificar_libro(BASE_PATH)
+                case "4":
+                    eliminar_libro(BASE_PATH)
+                case "5":
+                    estadisticas(BASE_PATH)
+                case "6":
+                    modo_api = True
+                    print("\n🌐 Cambiado a modo API (Google Books).")
+                case "7":
+                    print("¡Hasta luego!")
+                    break
+                case _:
+                    print("Opción inválida.")
+
 
 if __name__ == "__main__":
     main()
