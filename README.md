@@ -7,7 +7,7 @@ Entrega del Integrador Programación Para el Profesor Hualpa
 * **Lucas Avila**
 * **Mateo Olmedo**
 
-Proyecto desarrollado en Python 3.x para la Universidad Tecnológica Nacional (UTN) que implementa un sistema de gestión de Libros aplicando una estructura de persistencia jerárquica, recursividad para la lectura de datos, y consumo de API.
+Proyecto desarrollado en Python 3.10+ para la Universidad Tecnológica Nacional (UTN) que implementa un sistema de gestión de Libros aplicando una estructura de persistencia jerárquica, recursividad para la lectura de datos, y consumo de API.
 
 ## 🎯 Objetivo General
 
@@ -61,9 +61,9 @@ API Integration: Permite consultar la Google Books API para buscar y guardar nue
 
 Requisitos:
 
-Python 3.x
+Python 3.10+
 
-Librería requests (Necesaria para el Modo API):
+Librería requests (Necesaria para el Modo API), ejecuten la Terminal o cdm como Administrador:
 
             pip install requests
 
