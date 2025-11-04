@@ -4,6 +4,7 @@ from fsc_mostrar import mostrar_libros
 from fsc_guardado import guardar_libro
 from fsc_modificar import modificar_libro, eliminar_libro
 from api_libros import buscar_y_guardar_libro, mostrar_libros_api
+from fsc_ordenamiento import ordenar_libros
 
 # Ruta base donde se guardarán los datos
 BASE_PATH = os.path.join(os.path.dirname(__file__), "..", "data")
@@ -26,9 +27,9 @@ def mostrar_menu(modo_api=False):
         print("3. Modificar libro")
         print("4. Eliminar libro")
         print("5. Estadísticas")
-        print("6. Cambiar a modo API")
-        print("7. Salir")
-
+        print("6. Ordenar libros") # <-- AÑADIDO
+        print("7. Cambiar a modo API") # <-- MOVIDO
+        print("8. Salir") # <-- MOVIDO
 
 def main():
     print("📚 SISTEMA DE GESTIÓN DE LIBROS\n")
@@ -55,15 +56,18 @@ def main():
                 case _:
                     print("Opción inválida.")
 
-        # ----- MODO LOCAL -----
+        # ----- MODO LOCAL ----
         else:
             match opcion:
                 case "1":
+                    # (Tu código de 'guardar_libro' va aquí, pidiendo los datos)
+                    # Ejemplo rápido:
                     genero = input("Género del libro: ")
                     autor = input("Autor: ")
                     anio = input("Año de publicación: ")
                     titulo = input("Título del libro: ")
                     paginas = input("Cantidad de páginas: ")
+                    # Llama a la función importada de fsc_guardado.py
                     guardar_libro(BASE_PATH, genero, autor, anio, titulo, paginas)
                 case "2":
                     mostrar_libros(BASE_PATH)
@@ -74,9 +78,13 @@ def main():
                 case "5":
                     estadisticas(BASE_PATH)
                 case "6":
+                    # --- ¡AQUÍ ESTÁ LA CORRECCIÓN! ---
+                    # Llama a la función importada de fsc_ordenamiento.py
+                    ordenar_libros(BASE_PATH)
+                case "7":
                     modo_api = True
                     print("\n🌐 Cambiado a modo API (Google Books).")
-                case "7":
+                case "8":
                     print("¡Hasta luego!")
                     break
                 case _:
