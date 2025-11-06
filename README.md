@@ -6,6 +6,8 @@ Entrega del Integrador Programación Para el Profesor Hualpa
 * **Amanda Pagano**
 * **Lucas Avila**
 * **Mateo Olmedo**
+
+* 
 Enlace del Video Explicativo: https://youtu.be/i3qtqYqo--0?si=has4AEoJxIpZpDZ-
 
 Proyecto desarrollado en Python 3.10+ para la Universidad Tecnológica Nacional (UTN) que implementa un sistema de gestión de Libros aplicando una estructura de persistencia jerárquica, recursividad para la lectura de datos, y consumo de API.
