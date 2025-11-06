@@ -105,7 +105,6 @@ def obtener_libros_api(nombre_libro: str):
 # -------------------------------
 # FUNCIONES PRINCIPALES
 # -------------------------------
-
 def buscar_y_guardar_libro(base_path: str):
     """
     Busca un libro en la API (tolerando errores de escritura)
@@ -146,6 +145,7 @@ def buscar_y_guardar_libro(base_path: str):
     print(f"\n✅ Libro '{resultado['titulo']}' guardado correctamente desde la API.")
 
 
+
 def normalizar_texto(texto: str) -> str:
     """Elimina acentos y pasa todo a minúsculas."""
     texto = texto.lower()
@@ -153,10 +153,11 @@ def normalizar_texto(texto: str) -> str:
     return ''.join(c for c in texto if not unicodedata.combining(c))
 
 
+
 def mostrar_libros_api(base_path: str = None):
     """
-    Permite al usuario buscar libros en la API por género, tema o palabra clave,
-    mostrando una lista de resultados sin guardar en disco.
+    Busca libros en la API por género, tema o palabra clave,
+    mostrando hasta 25 resultados reales usando paginación.
     """
     consulta = input("\n🔎 Ingresa un género, autor o palabra clave para buscar libros: ").strip()
     if not consulta:
@@ -164,19 +165,47 @@ def mostrar_libros_api(base_path: str = None):
         return
 
     try:
-        params = {"q": consulta, "maxResults": 10, "printType": "books", "langRestrict": "es"}
-        response = requests.get(API_URL, params=params, timeout=5)
-        response.raise_for_status()
+        max_resultados = 25
+        resultados = []
+        start_index = 0
 
-        data = response.json()
-        items = data.get("items", [])
+        print("\nBuscando en la API...")
 
-        if not items:
+        while len(resultados) < max_resultados:
+            restante = max_resultados - len(resultados)
+            params = {
+                "q": consulta,
+                "maxResults": min(40, restante),
+                "startIndex": start_index,
+                "printType": "books",
+                "langRestrict": "es",
+                #"key":"API KEY ACÁ"
+            }
+
+            response = requests.get(API_URL, params=params, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+
+            if start_index == 0:
+                print(f"Total de resultados disponibles: {data.get('totalItems', 0)}")
+
+            items = data.get("items", [])
+            if not items:
+                break
+
+            resultados.extend(items)
+            start_index += len(items)
+
+            # Si la API devolvió menos de lo solicitado, no hay más páginas
+            if len(items) < params["maxResults"]:
+                break
+
+        if not resultados:
             print("❌ No se encontraron libros en la API para esa búsqueda.")
             return
 
         print(f"\n📚 Resultados encontrados para: '{consulta}'\n")
-        for i, item in enumerate(items, start=1):
+        for i, item in enumerate(resultados[:max_resultados], start=1):
             info = item.get("volumeInfo", {})
             titulo = info.get("title", "Título desconocido")
             autores = ", ".join(info.get("authors", ["Autor desconocido"]))
